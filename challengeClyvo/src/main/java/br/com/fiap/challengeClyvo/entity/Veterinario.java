@@ -1,0 +1,73 @@
+package br.com.fiap.challengeClyvo.entity;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+
+
+@Entity
+@Table(name = "TB_VET", uniqueConstraints = @UniqueConstraint(
+        name = "UQ_VET_CRMV", columnNames = {"CRMV_UF", "CRMV_NUMINSCRICAO"}))
+@JsonIgnoreProperties(value = {"hibernateLazyInitializer", "handler"}, ignoreUnknown = true)
+public class Veterinario {
+
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "ID_VET")
+    private Long id;
+
+    @NotBlank(message = "O Nome é obrigatorio")
+    @Size(min = 3, max = 70, message = "O nome deve ter entre 3 e 70 caracteres")
+    @Column(name = "NOME")
+    private String nome;
+
+    @NotBlank(message = "A área de atuação e obrigatória")
+    @Size(min = 3, max = 40)
+    @Column(name = "AREA")
+    private String area;
+
+    // Inicio da Identidade/CRMV | Procurando por maneira de deixar com uma formatacao melhor
+    // Colunas CRMV_* vêm do @Embeddable Crmv; a unicidade (UF + nº) é garantida pela UQ_VET_CRMV no @Table
+    @Embedded
+    private Crmv crmv;
+
+    public Veterinario(Long id, String nome, String area, Crmv crmv) {
+        this.id = id;
+        this.nome = nome;
+        this.area = area;
+        this.crmv = crmv;
+    }
+
+    public Veterinario() {
+    }
+
+    public Long getId() {
+        return id;
+    }
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getNome() {
+        return nome;
+    }
+    public void setNome(String nome) {
+        this.nome = nome;
+    }
+
+    public String getArea() {
+        return area;
+    }
+    public void setArea(String area) {
+        this.area = area;
+    }
+
+    public Crmv getCrmv() {
+        return crmv;
+    }
+    public void setCrmv(Crmv crmv) {
+        this.crmv = crmv;
+    }
+}

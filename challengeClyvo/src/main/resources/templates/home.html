@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Início')}"></head>
+<body class="app">
+<div th:replace="~{fragments/layout :: menu}"></div>
+
+<main class="conteudo">
+
+    <header class="cabecalho">
+        <div>
+            <h1>Bem-vindo à Clyvo</h1>
+            <p>Resumo da clínica e próximos atendimentos.</p>
+        </div>
+        <a class="btn btn-primario" th:href="@{/web/agendamento/novo}">Novo agendamento</a>
+    </header>
+
+    <section class="resumo" aria-label="Resumo da clínica">
+        <a class="resumo-item" th:if="${isAdmin}" th:href="@{/web/tutor}">
+            <span class="rotulo">Tutores</span>
+            <span class="numero" th:text="${totalTutores}">0</span>
+        </a>
+        <a class="resumo-item" th:if="${isAdmin}" th:href="@{/web/pet}">
+            <span class="rotulo">Pets</span>
+            <span class="numero" th:text="${totalPets}">0</span>
+        </a>
+        <a class="resumo-item" th:if="${isAdmin}" th:href="@{/web/veterinario}">
+            <span class="rotulo">Veterinários</span>
+            <span class="numero" th:text="${totalVeterinarios}">0</span>
+        </a>
+        <a class="resumo-item" th:href="@{/web/agendamento}">
+            <span class="rotulo">Consultas agendadas</span>
+            <span class="numero" th:text="${totalAgendados}">0</span>
+        </a>
+    </section>
+
+    <section>
+        <div class="secao-topo">
+            <h2>Próximos agendamentos</h2>
+            <a class="link-discreto" th:href="@{/web/agendamento}">Ver todos</a>
+        </div>
+
+        <ol class="agenda" th:if="${!proximos.isEmpty()}">
+            <li class="ficha" th:each="ag : ${proximos}" th:with="tutor=${nomesTutores[ag.idPet]}">
+                <div class="ficha-hora">
+                    <span class="hora" th:text="${#temporals.format(ag.dataHora, 'HH:mm')}">10:00</span>
+                    <span class="dia" th:text="${#temporals.format(ag.dataHora, 'dd/MM/yyyy')}">01/01/2026</span>
+                </div>
+                <div class="ficha-corpo">
+                    <span class="pet" th:text="${nomesPets[ag.idPet]}">Pet</span>
+                    <span class="linha" th:text="'Tutor: ' + ${#strings.isEmpty(tutor) ? 'sem tutor' : tutor}">Tutor: Fulano</span>
+                    <span class="linha" th:text="'Veterinário: ' + ${nomesVeterinarios[ag.idVeterinario]}">Veterinário: Dra. Ana</span>
+                    <span class="linha" th:if="${ag.motivo != null and !ag.motivo.isEmpty()}"
+                          th:text="'Motivo: ' + ${ag.motivo}">Motivo: Vacina</span>
+                </div>
+                <div class="ficha-acao">
+                    <a class="btn btn-secundario btn-pequeno"
+                       th:href="@{/web/consulta/agendamento/{id}/realizar(id=${ag.id})}">Realizar consulta</a>
+                </div>
+            </li>
+        </ol>
+
+        <div class="vazio-bloco" th:if="${proximos.isEmpty()}">
+            <p>Nenhum agendamento pendente.</p>
+            <span class="dica">Quando você agendar uma consulta, ela aparece aqui.</span>
+            <a class="btn btn-primario" th:href="@{/web/agendamento/novo}">Agendar consulta</a>
+        </div>
+    </section>
+
+</main>
+</body>
+</html>

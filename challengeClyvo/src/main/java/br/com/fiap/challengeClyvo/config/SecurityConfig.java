@@ -1,0 +1,91 @@
+package br.com.fiap.challengeClyvo.config;
+
+import br.com.fiap.challengeClyvo.security.JwtAuthFilter;
+import br.com.fiap.challengeClyvo.security.JwtAuthenticationEntryPoint;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig {
+
+    @Autowired
+    private JwtAuthFilter jwtAuthFilter;
+
+    @Autowired
+    private JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+
+    // Cadeia 1: páginas Thymeleaf (/web/**) — login por formulário + sessão (CSRF ativo)
+    @Bean
+    @Order(1)
+    public SecurityFilterChain webFilterChain(HttpSecurity http) throws Exception {
+        http
+                .securityMatcher("/web/**")
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/web/login").permitAll()
+                        .requestMatchers("/web/css/**", "/web/js/**", "/web/images/**").permitAll()
+
+                        .requestMatchers("/web/tutor/**").hasRole("ADMIN")
+                        .requestMatchers("/web/pet/**").hasRole("ADMIN")
+                        .requestMatchers("/web/veterinario/**").hasRole("ADMIN")
+
+                        .requestMatchers("/web/agendamento/**").hasAnyRole("ADMIN", "VETERINARIO")
+                        .requestMatchers("/web/consulta/**").hasAnyRole("ADMIN", "VETERINARIO")
+
+                        .anyRequest().authenticated()
+                )
+                .formLogin(form -> form
+                        .loginPage("/web/login")
+                        .loginProcessingUrl("/web/login")
+                        .defaultSuccessUrl("/web", true)
+                        .failureUrl("/web/login?erro")
+                        .permitAll()
+                )
+                .logout(logout -> logout
+                        .logoutUrl("/web/logout")
+                        .logoutSuccessUrl("/web/login?logout")
+                )
+                .exceptionHandling(ex -> ex
+                        .accessDeniedPage("/web/acesso-negado")
+                );
+
+        return http.build();
+    }
+
+    // Cadeia 2: API REST — JWT stateless
+    @Bean
+    @Order(2)
+    public SecurityFilterChain apiFilterChain(HttpSecurity http) throws Exception {
+        http
+                .csrf(csrf -> csrf.disable())
+                .sessionManagement(session ->
+                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .exceptionHandling(ex ->
+                        ex.authenticationEntryPoint(jwtAuthenticationEntryPoint))
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/", "/error").permitAll()
+                        .requestMatchers("/auth/login").permitAll()
+                        .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/api-docs/**").permitAll()
+
+                        .requestMatchers("/tutor/**").hasRole("ADMIN")
+                        .requestMatchers("/pet/**").hasRole("ADMIN")
+                        .requestMatchers("/veterinario/**").hasRole("ADMIN")
+
+                        .requestMatchers("/agendamento/**").hasAnyRole("ADMIN", "VETERINARIO")
+                        .requestMatchers("/consulta/**").hasAnyRole("ADMIN", "VETERINARIO")
+
+                        .anyRequest().authenticated()
+                )
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+
+        return http.build();
+    }
+}
