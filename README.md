@@ -121,32 +121,12 @@ az webapp config appsettings set \
 az webapp restart --name webapp-clyvo-care --resource-group rg-clyvo-care
 ```
 
-### 5. Conectar o repositório GitHub (CI/CD)
-
-```bash
-az webapp deployment github-actions add \
-  --name webapp-clyvo-care \
-  --resource-group rg-clyvo-care \
-  --repo rodrigotiezzi/JAVA-CHALLENGE-FIAP-2026 \
-  --branch "master" \
-  --login-with-github
-```
-
-
-Esse comando já cria o workflow `.yml` em `.github/workflows/` e o secret do publish profile automaticamente.
-Dentro do repositório do GitHub, vá em Settings -> Secrets and variables -> Actions.
-Clique em New repository secret.
-Adicione as 3 variáveis (pegue os mesmos valores usados na Azure CLI):
-SPRING_DATASOURCE_URL -> jdbc:sqlserver://sqlserver-clyvo-care.database.windows.net:1433;database=clyvo-caredb;encrypt=true;trustServerCertificate=false;hostNameInCertificate=*.database.windows.net;loginTimeout=30;
-SPRING_DATASOURCE_USERNAME -> dbadmin
-SPRING_DATASOURCE_PASSWORD -> FIAP@2tdspo2026
-
 
 Agora vamos fazer login! 
 Se so entrarmos na pagina, vamos ter um tela em branco. 
-É necessario digitar na url "/web/login"
-EX:https://webapp-clyvo-care.azurewebsites.net/web/login
+É necessario digitar na url "/challengeClyvo-0.0.1-SNAPSHOT/web/login"
+EX:https://webapp-clyvo-care.azurewebsites.net/challengeClyvo-0.0.1-SNAPSHOT/web/login
 
-O usuario é admin 
-e a senha é admin123
+O usuario padrão de testes é "admin" e a senha é "admin123"
+
 
