@@ -21,7 +21,7 @@ A solução expõe endpoints REST documentados via Swagger/OpenAPI, com suporte 
 
 ## Arquitetura
 
-<img width="1393" height="755" alt="image" src="https://github.com/user-attachments/assets/d014b145-9cc2-42e2-970a-810e3278481c" />
+<img width="1690" height="931" alt="Arquitetura Azure com DevOps e CI_CD" src="https://github.com/user-attachments/assets/8587c2da-0eb0-49eb-bba4-a3ac02b61491" />
 
 ---
 
