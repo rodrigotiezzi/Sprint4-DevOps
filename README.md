@@ -124,8 +124,8 @@ az webapp restart --name webapp-clyvo-care --resource-group rg-clyvo-care
 
 Agora vamos fazer login! 
 Se so entrarmos na pagina, vamos ter um tela em branco. 
-É necessario digitar na url "/challengeClyvo-0.0.1-SNAPSHOT/web/login"
-EX:https://webapp-clyvo-care.azurewebsites.net/challengeClyvo-0.0.1-SNAPSHOT/web/login
+É necessario digitar na url "/web/login"
+EX:https://webapp-clyvo-care.azurewebsites.net/web/login
 
 O usuario padrão de testes é "admin" e a senha é "admin123"
 
