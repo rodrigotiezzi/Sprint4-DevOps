@@ -30,97 +30,90 @@ A solução expõe endpoints REST documentados via Swagger/OpenAPI, com suporte 
 ```bash
 # Gerais
 RESOURCE_GROUP_NAME="rg-clyvo-care"
-LOCATION="southafricanorth"
+LOCATION="eastus2"            # Web App (B1)
+SQL_LOCATION="centralus"      # Azure SQL (East US 2 sem capacidade para SQL novo)
 
 # Web App
 WEBAPP_NAME="webapp-clyvo-care"
-APP_SERVICE_PLAN="plan-clyvo-care"
-RUNTIME="JAVA:21-java21"
+APP_SERVICE_PLAN="plan-clyvo-care-b1"
+SKU="B1"
+RUNTIME="TOMCAT:11.0-java21"  # projeto é Spring Boot 4 empacotado como .war
 
 # Banco de Dados (Azure SQL)
-SQL_SERVER_NAME="sqlserver-clyvo-care"
+SQL_SERVER_NAME="sqlserver-clyvo-care-cus"
 SQL_DB_NAME="clyvo-caredb"
 SQL_ADMIN_USER="dbadmin"
 SQL_ADMIN_PASSWORD="FIAP@2tdspo2026"
 
-# GitHub
-GITHUB_REPO_NAME="rodrigotiezzi/JAVA-CHALLENGE-FIAP-2026"
-BRANCH="master"
+# Repositório
+REPO_NAME="rodrigotiezzi/Sprint4-DevOps"
+BRANCH="main"
 ```
+
+> **Regiões:** a assinatura Azure for Students só permite `eastus2`, `mexicocentral`, `centralus`, `southafricanorth` e `canadacentral` (veja com `az policy assignment list --query "[].parameters" -o json`). `eastus2` é a de menor latência para o Brasil e a única com cota de B1.
 
 ---
 
 ## Comandos
 
+> Rode **um comando por vez** e espere a resposta (JSON) antes do próximo.
+
 ### 1. Resource Group
 
 ```bash
-az group create --name rg-clyvo-care --location "southafricanorth"
+az group create --name rg-clyvo-care --location eastus2
 ```
 
 ### 2. Banco de dados (Azure SQL)
 
 ```bash
-az sql server create \
-  --name "sqlserver-clyvo-care" \
-  --resource-group "rg-clyvo-care" \
-  --location "southafricanorth" \
-  --admin-user "dbadmin" \
-  --admin-password "FIAP@2tdspo2026"
+az sql server create --name sqlserver-clyvo-care-cus --resource-group rg-clyvo-care --location centralus --admin-user dbadmin --admin-password "FIAP@2tdspo2026"
+```
 
-az sql db create \
-  --resource-group rg-clyvo-care \
-  --server sqlserver-clyvo-care \
-  --name clyvo-caredb \
-  --service-objective Basic
+```bash
+az sql db create --resource-group rg-clyvo-care --server sqlserver-clyvo-care-cus --name clyvo-caredb --service-objective Basic
+```
 
-az sql server firewall-rule create \
-  --resource-group rg-clyvo-care \
-  --server sqlserver-clyvo-care \
-  --name AllowAzureServices \
-  --start-ip-address 0.0.0.0 \
-  --end-ip-address 255.255.255.255
+```bash
+az sql server firewall-rule create --resource-group rg-clyvo-care --server sqlserver-clyvo-care-cus --name AllowAzureServices --start-ip-address 0.0.0.0 --end-ip-address 255.255.255.255
 ```
 
 ### 3. App Service Plan + Web App
 
 ```bash
-az appservice plan create \
-  --name plan-clyvo-care \
-  --resource-group rg-clyvo-care \
-  --location southafricanorth \
-  --sku F1 \
-  --is-linux
+az appservice plan create --name plan-clyvo-care-b1 --resource-group rg-clyvo-care --location eastus2 --sku B1 --is-linux
+```
 
-az webapp create \
-  --name webapp-clyvo-care \
-  --resource-group rg-clyvo-care \
-  --plan plan-clyvo-care \
-  --runtime "JAVA:21-java21"
+```bash
+az webapp create --name webapp-clyvo-care --resource-group rg-clyvo-care --plan plan-clyvo-care-b1 --runtime "TOMCAT:11.0-java21"
+```
 
-az resource update \
-  --resource-group rg-clyvo-care \
-  --namespace Microsoft.Web \
-  --resource-type basicPublishingCredentialsPolicies \
-  --name scm \
-  --parent sites/webapp-clyvo-care \
-  --set properties.allow=true
+```bash
+az resource update --resource-group rg-clyvo-care --namespace Microsoft.Web --resource-type basicPublishingCredentialsPolicies --name scm --parent sites/webapp-clyvo-care --set properties.allow=true
 ```
 
 ### 4. Variáveis de ambiente do Web App
 
 ```bash
-az webapp config appsettings set \
-  --name "webapp-clyvo-care" \
-  --resource-group "rg-clyvo-care" \
-  --settings \
-    SPRING_DATASOURCE_USERNAME="dbadmin" \
-    SPRING_DATASOURCE_PASSWORD="FIAP@2tdspo2026" \
-    SPRING_DATASOURCE_URL="jdbc:sqlserver://sqlserver-clyvo-care.database.windows.net:1433;database=clyvo-caredb;encrypt=true;trustServerCertificate=false;hostNameInCertificate=*.database.windows.net;loginTimeout=30;"
+az webapp config appsettings set --name webapp-clyvo-care --resource-group rg-clyvo-care --settings SPRING_DATASOURCE_USERNAME="dbadmin" SPRING_DATASOURCE_PASSWORD="FIAP@2tdspo2026" SPRING_DATASOURCE_URL="jdbc:sqlserver://sqlserver-clyvo-care-cus.database.windows.net:1433;database=clyvo-caredb;encrypt=true;trustServerCertificate=false;hostNameInCertificate=*.database.windows.net;loginTimeout=30;"
+```
 
+```bash
 az webapp restart --name webapp-clyvo-care --resource-group rg-clyvo-care
 ```
 
+### 5. Deploy (Azure DevOps)
+
+Build pipeline **ClyvoCare - CI** (repositório `Sprint4-DevOps`, branch `main`) gera o `.war`, e a release **Release-CD** publica no Web App com a task *Deploy War to Azure App Service*, Runtime Stack `TOMCAT|11.0-java21`.
+
+### Problemas comuns
+
+- **503 + status "Cota excedida":** o plano F1 tem só 60 min de CPU/dia; use B1.
+- **Container exited with code 0:** runtime Java SE com pacote `.war`. Use `TOMCAT|11.0-java21`.
+- **`RequestDisallowedByAzure`:** região fora da lista permitida da assinatura.
+- **`RegionDoesNotAllowProvisioning` no SQL:** região sem capacidade, tente `centralus`.
+
+---
 
 Agora vamos fazer login! 
 Se so entrarmos na pagina, vamos ter um tela em branco. 
