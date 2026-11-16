@@ -104,7 +104,7 @@ az webapp restart --name webapp-clyvo-care --resource-group rg-clyvo-care
 
 ### 5. Deploy (Azure DevOps)
 
-Build pipeline **ClyvoCare - CI** (repositório `Sprint4-DevOps`, branch `main`) gera o `.war`, e a release **Release-CD** publica no Web App com a task *Deploy War to Azure App Service*, Runtime Stack `TOMCAT|11.0-java21`.
+Build pipeline **ClyvoCare - CI** (repositório `Sprint4-DevOps`, branch `main`) gera o `.war`, e a release pipeline **New release pipeline** publica no Web App com a task *Deploy War to Azure App Service*, Runtime Stack `TOMCAT|11.0-java21`.
 
 ### Problemas comuns
 
